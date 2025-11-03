@@ -3,7 +3,7 @@ const webApp = window.Telegram.WebApp;
 
 // === НАСТРОЙКИ ===
 // ⚠️ ВСТАВЬ сюда ссылку именно на kitchen_function!
-const BACKEND_URL = 'ССЫЛКА_НА_ВАШУ_ФУНКЦИЮ_KITCHEN';
+const BACKEND_URL = 'https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug';
 const CURRENCY = '₽';
 
 // === ВАШЕ ПОЛНОЕ МЕНЮ ===
