@@ -4,36 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Меню Фуршета</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="style.css?v=20241104">
 </head>
 <body>
     <div class="container">
-        
-        <!-- ======================= ЛОГОТИП ======================= -->
-        <!-- Убедитесь, что ваш файл с логотипом называется logo.png -->
-        <!-- ======================================================= -->
+
+        <!-- =============== ЛОГОТИП =============== -->
+        <!-- Убедись, что рядом с index.html есть файл logo.png -->
         <div class="logo-container">
             <img src="logo.png" alt="Логотип">
         </div>
-        
-        <h1>Наше Меню</h1>
+
+        <h1>Наше меню</h1>
+
+        <!-- =============== МЕНЮ =============== -->
         <div id="menu-accordion">
-            <!-- Аккордеон будет создан здесь с помощью JavaScript -->
+            <!-- Сюда JavaScript вставит категории и позиции -->
         </div>
-        
+
+        <!-- =============== КОРЗИНА =============== -->
         <div id="cart-summary">
             <h3>Ваш заказ:</h3>
             <p>Итого: <strong id="total-price">0</strong> ₽</p>
         </div>
+
     </div>
 
-    <!-- Подключаем скрипт Telegram -->
+    <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- ======================= ГЛАВНОЕ ИЗМЕНЕНИЕ ======================= -->
-    <!-- Мы изменили версию на v=10, чтобы сбросить кэш -->
-    <!-- =============================================================== -->
+
+    <!-- Основной скрипт -->
     <script src="script.js?v=20241104"></script>
-    
 </body>
 </html>
