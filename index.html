@@ -4,25 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Меню Фуршета</title>
-    <link rel="stylesheet" href="style.css?v=20241104">
+    <!-- Подключаем стили с версией для сброса кэша -->
+    <link rel="stylesheet" href="style.css?v=20241104_final"> 
 </head>
 <body>
     <div class="container">
 
         <!-- =============== ЛОГОТИП =============== -->
-        <!-- Убедись, что рядом с index.html есть файл logo.png -->
         <div class="logo-container">
             <img src="logo.png" alt="Логотип">
         </div>
 
         <h1>Наше меню</h1>
 
-        <!-- =============== МЕНЮ =============== -->
+        <!-- =============== МЕНЮ (ИСПРАВЛЕНО) =============== -->
+        <!-- Добавлено место для вставки аккордеона -->
         <div id="menu-accordion">
             <!-- Сюда JavaScript вставит категории и позиции -->
         </div>
 
-        <!-- =============== КОРЗИНА =============== -->
+        <!-- =============== КОРЗИНА (ИСПРАВЛЕНО) =============== -->
+        <!-- Добавлено место для отображения итоговой суммы -->
         <div id="cart-summary">
             <h3>Ваш заказ:</h3>
             <p>Итого: <strong id="total-price">0</strong> ₽</p>
@@ -33,7 +35,7 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-    <!-- Основной скрипт -->
-    <script src="script.js?v=20241104"></script>
+    <!-- Основной скрипт с версией для сброса кэша -->
+    <script src="script.js?v=20241104_final"></script> 
 </body>
 </html>
