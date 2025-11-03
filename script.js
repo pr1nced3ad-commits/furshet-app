@@ -1,7 +1,8 @@
 const webApp = window.Telegram.WebApp;
 
 // --- НАСТРОЙКИ ---
-const BACKEND_URL = 'СЮДА_ВСТАВИМ_ССЫЛКУ_ПОЗЖЕ'; 
+const BACKEND_URL = '
+https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug'; 
 const CURRENCY = '₽';
 
 // --- ВАШЕ МЕНЮ (полностью заполнено) ---
