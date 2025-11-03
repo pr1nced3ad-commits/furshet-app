@@ -13,10 +13,7 @@ body {
     padding: 15px;
     color: var(--tg-text-color);
 
-    /* ========================= ФОНОВОЕ ИЗОБРАЖЕНИЕ ========================= */
-    /* Убедитесь, что ваш файл с фоном называется background.jpg             */
-    /* Если фон не нужен, просто удалите следующие 4 строки                 */
-    /* ===================================================================== */
+    /* --- Фоновое изображение --- */
     background-image: url('background.jpg');
     background-size: cover;
     background-position: center;
@@ -30,13 +27,13 @@ body {
     margin-bottom: 20px;
 }
 .logo-container img {
-    max-width: 150px; /* Можете изменить максимальную ширину логотипа */
+    max-width: 150px;
     height: auto;
 }
 
 h1, h2 { 
     color: var(--tg-text-color); 
-    text-align: center; /* Заголовок по центру */
+    text-align: center;
 }
 
 /* Стили для аккордеона */
@@ -44,8 +41,8 @@ h1, h2 {
     margin-bottom: 10px;
     border-radius: 10px;
     overflow: hidden;
-    /* Делаем фон полупрозрачным, чтобы было видно фоновое изображение */
     background-color: rgba(243, 243, 243, 0.9); 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Добавили легкую тень */
 }
 /* Меняем цвет фона для темной темы Telegram */
 @media (prefers-color-scheme: dark) {
@@ -63,6 +60,11 @@ h1, h2 {
     justify-content: space-between;
     align-items: center;
     user-select: none;
+    
+    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
+    /* Делаем цвет заголовка категории четким и темным */
+    color: #1c1c1c; 
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7); /* Легкая светлая тень для читаемости */
 }
 .accordion-header::after {
     content: '▼';
@@ -85,13 +87,25 @@ h1, h2 {
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid var(--tg-hint-color);
+    border-bottom: 1px solid rgba(112, 117, 121, 0.5); /* Полупрозрачный разделитель */
 }
 .menu-item:last-child {
     border-bottom: none;
 }
-.item-info p { margin: 0; }
-.item-price { color: var(--tg-hint-color); font-size: 14px; }
+
+.item-info p { 
+    margin: 0;
+    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
+    /* Делаем цвет названия блюда четким */
+    color: #212121;
+}
+.item-price { 
+    font-size: 14px; 
+    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
+    /* Делаем цену более темной и заметной */
+    color: #444444;
+    font-weight: 500;
+}
 .item-controls { display: flex; align-items: center; }
 .item-controls button {
     width: 32px;
@@ -110,6 +124,9 @@ h1, h2 {
     font-size: 18px;
     min-width: 24px;
     text-align: center;
+    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
+    /* Делаем цифру количества тоже более четкой */
+    color: #1c1c1c;
 }
 
 /* Корзина */
@@ -117,10 +134,22 @@ h1, h2 {
     margin-top: 30px;
     padding: 15px;
     border-radius: 10px;
-    background-color: rgba(243, 243, 243, 0.9); /* Полупрозрачный фон */
+    background-color: rgba(243, 243, 243, 0.9);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
+#cart-summary h3, #cart-summary p {
+    color: #1c1c1c; /* Четкий текст в корзине */
+}
+
 @media (prefers-color-scheme: dark) {
-    #cart-summary {
+    #cart-summary, .accordion-item {
         background-color: rgba(40, 40, 40, 0.9);
+    }
+    .accordion-header, .item-info p, .item-controls span, #cart-summary h3, #cart-summary p {
+        color: #f5f5f5; /* Делаем весь текст светлым для темной темы */
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.7); /* Темная тень для читаемости */
+    }
+    .item-price {
+        color: #bbbbbb; /* Светло-серый для цены в темной теме */
     }
 }
