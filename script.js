@@ -1,8 +1,7 @@
 const webApp = window.Telegram.WebApp;
 
 // --- НАСТРОЙКИ ---
-const BACKEND_URL = '
-https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug'; 
+const BACKEND_URL = 'https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug'; // Не забудьте вставить сюда вашу ссылку
 const CURRENCY = '₽';
 
 // --- ВАШЕ МЕНЮ (полностью заполнено) ---
@@ -13,7 +12,7 @@ const menu = {
     "Итальянская Пицца из печи 30см": [ {id: 54, name: 'Пепперони 350гр', price: 470}, {id: 55, name: 'Маргарита 360гр', price: 470}, {id: 56, name: 'Ветчина Грибы 380гр', price: 470}, {id: 57, name: 'Сырная 380гр', price: 580}, {id: 58, name: 'Мясная 460гр', price: 540}, {id: 59, name: 'Фермерская 480гр', price: 480}, {id: 60, name: 'Мексиканская 460гр', price: 540}, {id: 61, name: 'Цыпа 530гр', price: 620}, {id: 62, name: 'Хачапури по Аджарски 210гр', price: 215}, {id: 63, name: 'Фокачча 210гр', price: 85} ], "Пирожное": [ {id: 64, name: 'Конфета с сухофруктами 30гр', price: 50}, {id: 65, name: 'Корзиночка со сгущёнкой 75гр', price: 80}, {id: 66, name: 'Корзиночка со сливками 70гр', price: 90}, {id: 67, name: 'Муравейник с грецким орехом 50гр', price: 70}, {id: 68, name: 'Пирог три молока 95гр', price: 90}, {id: 69, name: 'Пирожное Безе 20гр', price: 60}, {id: 70, name: 'Заварное с творожным кремом 40гр', price: 75}, {id: 71, name: 'Пирожное Картошка 80гр', price: 80}, {id: 72, name: 'Пирожное Красный Бархат 95гр', price: 120}, {id: 73, name: 'Пирожное Медовое 50гр', price: 80}, {id: 74, name: 'Пирожное Морковное 60гр', price: 80}, {id: 75, name: 'Пирожное Рафаэлло 95гр', price: 120}, {id: 76, name: 'Пирожное Шоколадное 50гр', price: 90}, {id: 77, name: 'Чизкейк Классический 90гр', price: 130}, {id: 78, name: 'Чизкейк Ягодный 90гр', price: 130}, {id: 79, name: 'Пирожное Шу Манго-Маракуйя 55гр', price: 90}, {id: 80, name: 'Лимонный тарт 90гр', price: 130}, {id: 81, name: 'Меренговый рулет 200гр', price: 220}, {id: 82, name: 'Рулет Тропический 120гр', price: 140}, {id: 83, name: 'Эклер 60гр (пломбир, шоколад, облепиха, клубника, лимон)', price: 130}, {id: 84, name: 'Эклер Мини 30гр (пломбир, шоколад, облепиха, клубника, лимон)', price: 75} ]
 };
 
-// --- Остальной код остается без изменений ---
+// --- Остальной код из предыдущей версии с аккордеоном ---
 const cart = {};
 
 function renderMenu() {
@@ -80,34 +79,70 @@ function updateCartDisplay() {
     }
 }
 
+// --- ИЗМЕНЕННЫЙ ОБРАБОТЧИК КНОПКИ ---
 webApp.onEvent('mainButtonClicked', function() {
-    if (Object.keys(cart).length === 0) { webApp.showAlert('Ваша корзина пуста.'); return; }
-    const orderData = { cart: {}, totalPrice: 0, userInfo: webApp.initDataUnsafe.user };
-    let totalPrice = 0;
-    for (const id in cart) {
-        for (const category in menu) {
-            const menuItem = menu[category].find(item => item.id == id);
-            if (menuItem) {
-                orderData.cart[menuItem.name] = { quantity: cart[id], price: menuItem.price };
-                totalPrice += menuItem.price * cart[id];
-                break;
+    if (Object.keys(cart).length === 0) {
+        webApp.showAlert('Ваша корзина пуста.');
+        return;
+    }
+
+    // Запрашиваем контакт
+    webApp.requestContact((sent, contact) => {
+        // Проверяем, поделился ли пользователь контактом
+        if (!sent) {
+            webApp.showAlert('Для оформления заказа нам нужен ваш номер телефона.');
+            return;
+        }
+
+        // Если да, то собираем все данные для отправки
+        const orderData = { 
+            cart: {}, 
+            totalPrice: 0, 
+            userInfo: webApp.initDataUnsafe.user,
+            // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+            // Мы получаем номер телефона из ответа и добавляем его к заказу
+            phoneNumber: contact ? contact.phone_number : "Не получен" 
+        };
+
+        let totalPrice = 0;
+        for (const id in cart) {
+            for (const category in menu) {
+                const menuItem = menu[category].find(item => item.id == id);
+                if (menuItem) {
+                    orderData.cart[menuItem.name] = { quantity: cart[id], price: menuItem.price };
+                    totalPrice += menuItem.price * cart[id];
+                    break;
+                }
             }
         }
-    }
-    orderData.totalPrice = totalPrice;
-    webApp.MainButton.showProgress();
-    fetch(BACKEND_URL, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(orderData) })
-    .then(response => response.json())
-    .then(data => {
-        webApp.MainButton.hideProgress();
-        if (data.status === 'ok') { webApp.showAlert('Ваш заказ принят! Скоро с вами свяжется менеджер.'); webApp.close(); }
-        else { webApp.showAlert('Произошла ошибка. Попробуйте снова.'); }
-    }).catch(error => {
-        webApp.MainButton.hideProgress();
-        webApp.showAlert('Ошибка сети. Пожалуйста, проверьте ваше интернет-соединение.');
+        orderData.totalPrice = totalPrice;
+        
+        webApp.MainButton.showProgress();
+
+        // Отправляем все данные (включая номер) на "Кухню"
+        fetch(BACKEND_URL, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(orderData) 
+        })
+        .then(response => response.json())
+        .then(data => {
+            webApp.MainButton.hideProgress();
+            if (data.status === 'ok') { 
+                webApp.showAlert('Ваш заказ принят! Скоро с вами свяжется менеджер.'); 
+                webApp.close(); 
+            } else { 
+                webApp.showAlert('Произошла ошибка. Попробуйте снова.'); 
+            }
+        }).catch(error => {
+            webApp.MainButton.hideProgress();
+            webApp.showAlert('Ошибка сети. Пожалуйста, проверьте ваше интернет-соединение.');
+        });
     });
 });
 
+
+// --- Инициализация ---
 webApp.expand();
 renderMenu();
 updateCartDisplay();
