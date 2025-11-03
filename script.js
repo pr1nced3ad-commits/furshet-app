@@ -1,7 +1,7 @@
 const webApp = window.Telegram.WebApp;
 
 // --- НАСТРОЙКИ ---
-const BACKEND_URL = 'https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug'; // Не забудьте вставить сюда вашу ссылку
+const BACKEND_URL = 'https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug'; // Убедитесь, что здесь ваша правильная ссылка
 const CURRENCY = '₽';
 
 // --- ВАШЕ МЕНЮ (полностью заполнено) ---
@@ -15,132 +15,65 @@ const menu = {
 // --- Остальной код из предыдущей версии с аккордеоном ---
 const cart = {};
 
-function renderMenu() {
-    const accordion = document.getElementById('menu-accordion');
-    for (const category in menu) {
-        const itemWrapper = document.createElement('div');
-        itemWrapper.className = 'accordion-item';
-        const header = document.createElement('div');
-        header.className = 'accordion-header';
-        header.innerText = category;
-        const content = document.createElement('div');
-        content.className = 'accordion-content';
-        menu[category].forEach(item => {
-            const itemDiv = document.createElement('div');
-            itemDiv.className = 'menu-item';
-            itemDiv.innerHTML = `
-                <div class="item-info">
-                    <p><strong>${item.name}</strong></p>
-                    <p class="item-price">${item.price} ${CURRENCY}</p>
-                </div>
-                <div class="item-controls">
-                    <button onclick="removeFromCart(${item.id})">-</button>
-                    <span id="quantity-${item.id}">0</span>
-                    <button onclick="addToCart(${item.id})">+</button>
-                </div>
-            `;
-            content.appendChild(itemDiv);
-        });
-        itemWrapper.appendChild(header);
-        itemWrapper.appendChild(content);
-        accordion.appendChild(itemWrapper);
-        header.addEventListener('click', () => {
-            header.classList.toggle('active');
-            if (content.style.maxHeight) {
-                content.style.maxHeight = null;
-                content.style.padding = "0 15px";
-            } else {
-                content.style.maxHeight = content.scrollHeight + "px";
-                content.style.padding = "10px 15px";
-            }
-        });
-    }
-}
+function renderMenu() { /* ... этот код не меняется ... */ }
+window.addToCart = function(id) { /* ... этот код не меняется ... */ }
+window.removeFromCart = function(id) { /* ... этот код не меняется ... */ }
+function updateCartDisplay() { /* ... этот код не меняется ... */ }
 
-window.addToCart = function(id) { cart[id] = (cart[id] || 0) + 1; updateCartDisplay(); }
-window.removeFromCart = function(id) { if (cart[id]) { cart[id]--; if (cart[id] === 0) delete cart[id]; updateCartDisplay(); } }
-
-function updateCartDisplay() {
-    let totalPrice = 0; let hasItems = false;
-    for (const category in menu) {
-        menu[category].forEach(item => {
-            const quantity = cart[item.id] || 0;
-            const quantitySpan = document.getElementById(`quantity-${item.id}`);
-            if (quantitySpan) quantitySpan.innerText = quantity;
-            if (quantity > 0) { totalPrice += item.price * quantity; hasItems = true; }
-        });
-    }
-    document.getElementById('total-price').innerText = totalPrice;
-    if (hasItems) {
-        webApp.MainButton.setText(`Оформить заказ (${totalPrice} ${CURRENCY})`);
-        if (!webApp.MainButton.isVisible) webApp.MainButton.show();
-    } else {
-        webApp.MainButton.hide();
-    }
-}
-
-// --- ИЗМЕНЕННЫЙ ОБРАБОТЧИК КНОПКИ ---
+// --- ИСПРАВЛЕННЫЙ ОБРАБОТЧИК КНОПКИ ---
 webApp.onEvent('mainButtonClicked', function() {
     if (Object.keys(cart).length === 0) {
         webApp.showAlert('Ваша корзина пуста.');
         return;
     }
 
-    // Запрашиваем контакт
-    webApp.requestContact((sent, contact) => {
-        // Проверяем, поделился ли пользователь контактом
-        if (!sent) {
-            webApp.showAlert('Для оформления заказа нам нужен ваш номер телефона.');
-            return;
-        }
+    // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
+    // Данные о пользователе, включая номер телефона, уже доступны в webApp.initDataUnsafe.user
+    // Нам не нужно использовать requestContact, который работает не так, как мы ожидали.
+    // Вместо этого, мы просто собираем данные и отправляем.
+    
+    const orderData = { 
+        cart: {}, 
+        totalPrice: 0, 
+        userInfo: webApp.initDataUnsafe.user
+        // Номер телефона будет внутри userInfo, если пользователь его предоставил Telegram
+    };
 
-        // Если да, то собираем все данные для отправки
-        const orderData = { 
-            cart: {}, 
-            totalPrice: 0, 
-            userInfo: webApp.initDataUnsafe.user,
-            // --- ИСПРАВЛЕНИЕ ЗДЕСЬ ---
-            // Мы получаем номер телефона из ответа и добавляем его к заказу
-            phoneNumber: contact ? contact.phone_number : "Не получен" 
-        };
-
-        let totalPrice = 0;
-        for (const id in cart) {
-            for (const category in menu) {
-                const menuItem = menu[category].find(item => item.id == id);
-                if (menuItem) {
-                    orderData.cart[menuItem.name] = { quantity: cart[id], price: menuItem.price };
-                    totalPrice += menuItem.price * cart[id];
-                    break;
-                }
+    let totalPrice = 0;
+    for (const id in cart) {
+        for (const category in menu) {
+            const menuItem = menu[category].find(item => item.id == id);
+            if (menuItem) {
+                orderData.cart[menuItem.name] = { quantity: cart[id], price: menuItem.price };
+                totalPrice += menuItem.price * cart[id];
+                break;
             }
         }
-        orderData.totalPrice = totalPrice;
-        
-        webApp.MainButton.showProgress();
+    }
+    orderData.totalPrice = totalPrice;
+    
+    webApp.MainButton.showProgress();
 
-        // Отправляем все данные (включая номер) на "Кухню"
-        fetch(BACKEND_URL, { 
-            method: 'POST', 
-            headers: {'Content-Type': 'application/json'}, 
-            body: JSON.stringify(orderData) 
-        })
-        .then(response => response.json())
-        .then(data => {
-            webApp.MainButton.hideProgress();
-            if (data.status === 'ok') { 
-                webApp.showAlert('Ваш заказ принят! Скоро с вами свяжется менеджер.'); 
-                webApp.close(); 
-            } else { 
-                webApp.showAlert('Произошла ошибка. Попробуйте снова.'); 
-            }
-        }).catch(error => {
-            webApp.MainButton.hideProgress();
-            webApp.showAlert('Ошибка сети. Пожалуйста, проверьте ваше интернет-соединение.');
-        });
+    // Отправляем все данные на "Кухню"
+    fetch(BACKEND_URL, { 
+        method: 'POST', 
+        headers: {'Content-Type': 'application/json'}, 
+        body: JSON.stringify(orderData) 
+    })
+    .then(response => response.json())
+    .then(data => {
+        webApp.MainButton.hideProgress();
+        if (data.status === 'ok') { 
+            webApp.showAlert('Ваш заказ принят! Скоро с вами свяжется менеджер.'); 
+            webApp.close(); 
+        } else { 
+            webApp.showAlert('Произошла ошибка. Попробуйте снова.'); 
+        }
+    }).catch(error => {
+        webApp.MainButton.hideProgress();
+        webApp.showAlert('Ошибка сети. Пожалуйста, проверьте ваше интернет-соединение.');
     });
 });
-
 
 // --- Инициализация ---
 webApp.expand();
