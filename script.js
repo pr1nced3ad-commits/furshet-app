@@ -40,9 +40,9 @@ document.addEventListener('DOMContentLoaded', function() {
                         <p class="item-price">${item.price} ${CURRENCY}</p>
                     </div>
                     <div class="item-controls">
-                        <button onclick="addToCart(${item.id})">+</button>
-                        <span id="quantity-${item.id}">0</span>
                         <button onclick="removeFromCart(${item.id})">-</button>
+                        <span id="quantity-${item.id}">0</span>
+                        <button onclick="addToCart(${item.id})">+</button>
                     </div>
                 `;
                 content.appendChild(itemDiv);
