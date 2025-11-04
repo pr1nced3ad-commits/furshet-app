@@ -1,7 +1,7 @@
-// ЖДЕМ, ПОКА ВСЯ СТРАНИЦА ПОЛНОСТЬЮ ЗАГРУЗИТСЯ
+// script.js — полный исправленный вариант
 document.addEventListener('DOMContentLoaded', function() {
 
-    const webApp = window.Telegram.WebApp;
+    const webApp = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
 
     // --- НАСТРОЙКИ ---
     const BACKEND_URL = 'https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug';
@@ -31,11 +31,15 @@ document.addEventListener('DOMContentLoaded', function() {
             });
             menu = parsedMenu;
             renderAccordion();
+
+            // ВАЖНО: обновляем отображение ПОСЛЕ того как меню отрисовано
+            updateAllDisplays();
+
         } catch (error) {
             console.error(error);
             const accordion = document.getElementById('menu-accordion');
-            accordion.innerHTML = '<p style="text-align: center; color: red;">Не удалось загрузить меню.</p>';
-            webApp.showAlert('Не удалось загрузить меню. Пожалуйста, попробуйте позже.');
+            if (accordion) accordion.innerHTML = '<p style="text-align: center; color: red;">Не удалось загрузить меню.</p>';
+            if (webApp) webApp.showAlert('Не удалось загрузить меню. Пожалуйста, попробуйте позже.');
         }
     }
 
@@ -55,15 +59,16 @@ document.addEventListener('DOMContentLoaded', function() {
             menu[category].forEach(item => {
                 const itemDiv = document.createElement('div');
                 itemDiv.className = 'menu-item';
+                // Через data-* атрибуты не придётся полагаться на глобальные функции
                 itemDiv.innerHTML = `
                     <div class="item-info">
                         <p><strong>${item.name}</strong></p>
                         <p class="item-price">${item.price} ${CURRENCY}</p>
                     </div>
                     <div class="item-controls">
-                        <button onclick="removeFromCart(${item.id})">-</button>
+                        <button class="btn-remove" data-id="${item.id}">-</button>
                         <span id="quantity-${item.id}">0</span>
-                        <button onclick="addToCart(${item.id})">+</button>
+                        <button class="btn-add" data-id="${item.id}">+</button>
                     </div>
                 `;
                 content.appendChild(itemDiv);
@@ -71,6 +76,8 @@ document.addEventListener('DOMContentLoaded', function() {
             itemWrapper.appendChild(header);
             itemWrapper.appendChild(content);
             accordion.appendChild(itemWrapper);
+
+            // Поведение аккордеона для категорий
             header.addEventListener('click', () => {
                 header.classList.toggle('active');
                 if (content.style.maxHeight) {
@@ -82,26 +89,37 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
+
+        // Навешиваем делегированные обработчики на + и - (лучше работает и после перерисовки)
+        accordion.addEventListener('click', function(e) {
+            const addBtn = e.target.closest('.btn-add');
+            const remBtn = e.target.closest('.btn-remove');
+            if (addBtn) {
+                const id = parseInt(addBtn.dataset.id);
+                addToCart(id);
+            } else if (remBtn) {
+                const id = parseInt(remBtn.dataset.id);
+                removeFromCart(id);
+            }
+        });
     }
     
-    // ======================= ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ =======================
-    window.addToCart = function(id) {
+    // === ФУНКЦИИ КОРЗИНЫ ===
+    function addToCart(id) {
         cart[id] = (cart[id] || 0) + 1;
-        // Просто вызываем одну-единственную функцию полного обновления
         updateAllDisplays();
     }
-    window.removeFromCart = function(id) {
+    function removeFromCart(id) {
         if (cart[id]) {
             cart[id]--;
             if (cart[id] <= 0) delete cart[id];
-            // Просто вызываем одну-единственную функцию полного обновления
             updateAllDisplays();
         }
     }
 
-    // ЕДИНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ. Она обновит и счетчики, и корзину.
+    // ЕДИНАЯ ФУНКЦИЯ ОБНОВЛЕНИЯ
     function updateAllDisplays() {
-        // Обновляем счетчики рядом с кнопками +/-
+        // 1) Обновляем счетчики рядом с кнопками +/- (если меню загружено)
         for (const category in menu) {
             menu[category].forEach(item => {
                 const quantitySpan = document.getElementById(`quantity-${item.id}`);
@@ -111,29 +129,32 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
         
-        // Обновляем корзину
+        // 2) Обновляем корзину
         const cartHeader = document.getElementById('cart-header');
         const cartItemsList = document.getElementById('cart-items-list');
         const emptyCartMessage = document.getElementById('empty-cart-message');
-        if (!cartHeader || !cartItemsList || !emptyCartMessage) return;
+        const totalPriceEl = document.getElementById('total-price');
+        if (!cartHeader || !cartItemsList || !emptyCartMessage || !totalPriceEl) return;
         
         cartItemsList.innerHTML = '';
         let totalPrice = 0;
         let totalItems = 0;
         
-        for (const id in cart) {
-            totalItems += cart[id];
+        for (const idKey in cart) {
+            const qty = cart[idKey];
+            const id = parseInt(idKey);
+            totalItems += qty;
+            let found = null;
             for (const category in menu) {
-                const menuItem = menu[category].find(item => item.id == id);
-                if (menuItem) {
-                    const itemTotalPrice = menuItem.price * cart[id];
-                    totalPrice += itemTotalPrice;
-                    const listItem = document.createElement('li');
-                    listItem.innerHTML = `<span>${menuItem.name} x${cart[id]}</span><strong>${itemTotalPrice} ${CURRENCY}</strong>`;
-                    cartItemsList.appendChild(listItem);
-                    break;
-                }
+                found = menu[category].find(item => item.id === id);
+                if (found) break;
             }
+            if (!found) continue;
+            const itemTotalPrice = found.price * qty;
+            totalPrice += itemTotalPrice;
+            const listItem = document.createElement('li');
+            listItem.innerHTML = `<span>${found.name} x${qty}</span><strong>${itemTotalPrice} ${CURRENCY}</strong>`;
+            cartItemsList.appendChild(listItem);
         }
         
         if (totalItems > 0) {
@@ -141,31 +162,80 @@ document.addEventListener('DOMContentLoaded', function() {
             emptyCartMessage.style.display = 'none';
         } else {
             cartHeader.innerText = '🛒 Ваша корзина';
+            // Если пусто, покажем сообщение-плейсхолдер
             cartItemsList.appendChild(emptyCartMessage);
             emptyCartMessage.style.display = 'block';
         }
         
-        document.getElementById('total-price').innerText = totalPrice;
+        totalPriceEl.innerText = totalPrice;
         
-        if (totalItems > 0) {
-            webApp.MainButton.setText(`Оформить заказ (${totalPrice} ${CURRENCY})`);
-            if (!webApp.MainButton.isVisible) webApp.MainButton.show();
-        } else {
-            webApp.MainButton.hide();
+        // MainButton (если WebApp)
+        if (webApp) {
+            if (totalItems > 0) {
+                try {
+                    webApp.MainButton.setText(`Оформить заказ (${totalPrice} ${CURRENCY})`);
+                    if (!webApp.MainButton.isVisible) webApp.MainButton.show();
+                } catch (e) { console.warn('Ошибка WebApp.MainButton:', e); }
+            } else {
+                try { webApp.MainButton.hide(); } catch(e) {}
+            }
         }
     }
-    
-    // ... (остальной код для раскрытия аккордеона-корзины и отправки заказа остается БЕЗ ИЗМЕНЕНИЙ) ...
+
+    // === Клик по заголовку корзины — открытие/закрытие содержимого ===
     const cartHeader = document.getElementById('cart-header');
     const cartContent = document.getElementById('cart-content');
     if (cartHeader && cartContent) {
-        cartHeader.addEventListener('click', () => { /* ... */ });
+        cartHeader.addEventListener('click', () => {
+            cartHeader.classList.toggle('active');
+            if (cartContent.style.maxHeight) {
+                cartContent.style.maxHeight = null;
+                cartContent.style.padding = "0 15px";
+            } else {
+                cartContent.style.maxHeight = cartContent.scrollHeight + "px";
+                cartContent.style.padding = "10px 15px";
+            }
+        });
     }
-    webApp.onEvent('mainButtonClicked', function() { /* ... */ });
+
+    // === Обработка нажатия MainButton ===
+    if (webApp) {
+        webApp.onEvent('mainButtonClicked', function() {
+            // собираем заказ и отправляем на бекенд (или webApp.sendData)
+            let orderData = { cart: {}, totalPrice: 0, userInfo: webApp.initDataUnsafe ? webApp.initDataUnsafe.user : {} };
+            let total = 0;
+            for (const idKey in cart) {
+                const qty = cart[idKey];
+                const id = parseInt(idKey);
+                let found = null;
+                for (const category in menu) {
+                    found = menu[category].find(item => item.id === id);
+                    if (found) break;
+                }
+                if (!found) continue;
+                orderData.cart[found.name] = { quantity: qty, price: found.price };
+                total += found.price * qty;
+            }
+            orderData.totalPrice = total;
+
+            try {
+                webApp.MainButton.showProgress();
+            } catch(e) {}
+            
+            // отправим в bot через webApp.sendData (популярный вариант)
+            try {
+                webApp.sendData(JSON.stringify(orderData));
+                // webApp.close(); // не закрываем автоматически — бот ответит
+            } catch (e) {
+                console.error('Ошибка при отправке данных:', e);
+                webApp.showAlert('Ошибка отправки заказа. Попробуйте ещё раз.');
+            } finally {
+                try { webApp.MainButton.hideProgress(); } catch(e) {}
+            }
+        });
+    }
 
     // ИНИЦИАЛИЗАЦИЯ
-    webApp.expand();
+    if (webApp && webApp.expand) webApp.expand();
     loadAndRenderMenu();
-    updateAllDisplays(); // Заменено с updateCartSummary на полную функцию
-
 });
