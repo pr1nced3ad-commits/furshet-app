@@ -156,8 +156,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     totalEl.innerText = Math.round(totals.totalPrice);
-    if (cartContentEl)
-      cartContentEl.style.maxHeight = cartContentEl.scrollHeight + "px";
+    
+    // Этот код автоматически подгоняет высоту корзины, если она открыта
+    if (cartHeader.classList.contains('active')) {
+        cartContentEl.style.maxHeight = cartContentEl.scrollHeight + "px";
+    }
 
     if (webApp) {
       if (totals.totalItems > 0) {
@@ -167,18 +170,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // === Модальное окно ввода телефона ===
-  function showPhonePrompt(totalPrice, orderData) {
-    const phone = prompt(
-      `Введите номер телефона, чтобы подтвердить заказ на ${totalPrice} ₽:`,
-      webApp.initDataUnsafe?.user?.phone_number || ""
+  // ========================== ГЛАВНОЕ ИЗМЕНЕНИЕ ==========================
+  // Этот блок заменен на нашу надежную версию с prompt
+  // =====================================================================
+  webApp.onEvent("mainButtonClicked", function () {
+    const totals = computeTotals();
+    if (totals.totalItems === 0) {
+        webApp.showAlert('Ваша корзина пуста.');
+        return;
+    }
+
+    const phoneNumber = prompt(
+      `Введите номер телефона, чтобы подтвердить заказ на ${totals.totalPrice} ₽:`, ""
     );
-    if (!phone) {
+
+    if (!phoneNumber) {
       webApp.showAlert("Вы не указали номер телефона 😕");
       return;
     }
 
-    orderData.phoneNumber = phone;
+    const orderData = { 
+        cart: {}, 
+        totalPrice: totals.totalPrice, 
+        userInfo: webApp.initDataUnsafe?.user || {},
+        phoneNumber: phoneNumber
+    };
+
+    Object.keys(cart).forEach((id) => {
+      const found = Object.values(menu).flat().find((it) => it.id === id);
+      if (found) orderData.cart[found.name] = { quantity: cart[id], price: found.price };
+    });
+
+    webApp.MainButton.showProgress();
 
     fetch(BACKEND_URL, {
       method: "POST",
@@ -186,29 +209,19 @@ document.addEventListener("DOMContentLoaded", () => {
       body: JSON.stringify(orderData),
     })
       .then((r) => r.json())
-      .then(() => {
-        webApp.showAlert("✅ Заказ принят! Менеджер свяжется с вами в ближайшее время.");
-        cartHeader.innerText = "🛒 Ваша корзина";
-        document.getElementById("cart-items-list").innerHTML =
-          '<li id="empty-cart-message">Корзина пуста</li>';
-        document.getElementById("total-price").innerText = "0";
-        for (const key in cart) delete cart[key];
-        webApp.MainButton.hide();
+      .then((data) => {
+          webApp.MainButton.hideProgress();
+          if (data.status === 'ok') {
+            webApp.showAlert("✅ Заказ принят! Менеджер свяжется с вами в ближайшее время.");
+            webApp.close();
+          } else {
+            webApp.showAlert("Ошибка при отправке заказа 😔");
+          }
       })
       .catch(() => {
-        webApp.showAlert("Ошибка при отправке заказа 😔");
+        webApp.MainButton.hideProgress();
+        webApp.showAlert("Ошибка сети. Пожалуйста, проверьте подключение к интернету.");
       });
-  }
-
-  // === Кнопка "Оформить заказ" ===
-  webApp.onEvent("mainButtonClicked", function () {
-    const totals = computeTotals();
-    const order = { cart: {}, totalPrice: totals.totalPrice, userInfo: webApp.initDataUnsafe?.user || {} };
-    Object.keys(cart).forEach((id) => {
-      const found = Object.values(menu).flat().find((it) => it.id === id);
-      if (found) order.cart[found.name] = { quantity: cart[id], price: found.price };
-    });
-    showPhonePrompt(totals.totalPrice, order);
   });
 
   // === Разворачивание корзины ===
