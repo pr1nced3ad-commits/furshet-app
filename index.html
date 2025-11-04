@@ -1,44 +1,39 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Меню Фуршета</title>
-  <link rel="stylesheet" href="style.css?v=DARK_FIX" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Меню Фуршета</title>
+    <link rel="stylesheet" href="style.css?v=ACCORDION_FINAL">
 </head>
 <body>
-  <div class="container">
+<div class="container">
+
+    <!-- ===== Логотип ===== -->
     <div class="logo-container">
-      <img src="logo.png" alt="Логотип" />
+        <img src="logo.png" alt="Логотип">
     </div>
 
-    <h1 class="title-dark">Наше Меню</h1>
+    <h1>Наше Меню</h1>
 
+    <!-- ===== Аккордеон меню ===== -->
     <div id="menu-accordion"></div>
 
+    <!-- ===== Корзина ===== -->
     <div id="cart-accordion" class="accordion-item cart-item">
-      <div id="cart-header" class="accordion-header">🛒 Ваша корзина</div>
-      <div id="cart-content" class="accordion-content">
-        <ul id="cart-items-list">
-          <li id="empty-cart-message">Корзина пуста</li>
-        </ul>
-        <hr />
-        <p class="total-line">Итого: <strong id="total-price">0</strong> ₽</p>
-      </div>
+        <div id="cart-header" class="accordion-header">🛒 Ваша корзина</div>
+        <div id="cart-content" class="accordion-content">
+            <ul id="cart-items-list">
+                <li id="empty-cart-message">Корзина пуста</li>
+            </ul>
+            <hr>
+            <p class="total-line">Итого: <strong id="total-price">0</strong> ₽</p>
+        </div>
     </div>
-  </div>
 
-  <!-- Модалка ввода телефона -->
-  <div id="phone-modal" class="modal hidden">
-    <div class="modal-content">
-      <h3>Подтверждение заказа</h3>
-      <p>Введите номер телефона, чтобы менеджер связался с вами:</p>
-      <input type="tel" id="phone-input" placeholder="+7 (999) 123-45-67" />
-      <div class="modal-buttons">
-        <button id="confirm-order" class="btn-confirm">Подтвердить</button>
-        <button id="cancel-order" class="btn-cancel">Отмена</button>
-      </div>
-    </div>
-  </div>
+</div>
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="script.js?v=ACCORDION_FINAL"></script>
+</body>
+</html>
