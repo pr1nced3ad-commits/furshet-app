@@ -4,45 +4,36 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Меню Фуршета</title>
-    <!-- Подключаем стили с новой версией для сброса кэша -->
-    <link rel="stylesheet" href="style.css?v=ACCORDION_CART"> 
+    <link rel="stylesheet" href="style.css?v=ACCORDION_FINAL">
 </head>
 <body>
-    <div class="container">
-        
-        <!-- ======================= ЛОГОТИП ======================= -->
-        <div class="logo-container">
-            <img src="logo.png" alt="Логотип">
-        </div>
-        
-        <h1>Наше Меню</h1>
-        
-        <!-- Аккордеон с категориями будет создан здесь -->
-        <div id="menu-accordion"></div>
-        
-        <!-- ======================= НОВАЯ КОРЗИНА ======================= -->
-        <!-- Теперь корзина - это тоже элемент аккордеона -->
-        <!-- ============================================================= -->
-        <div id="cart-accordion" class="accordion-item cart-item">
-            <div id="cart-header" class="accordion-header">
-                <!-- Сюда JavaScript будет вставлять текст, например "Ваш заказ (3 товара)" -->
-            </div>
-            <div id="cart-content" class="accordion-content">
-                <ul id="cart-items-list">
-                    <li id="empty-cart-message">Корзина пуста</li>
-                </ul>
-                <hr> <!-- Разделитель -->
-                <p class="total-line">Итого: <strong id="total-price">0</strong> ₽</p>
-            </div>
-        </div>
-        
+<div class="container">
+
+    <!-- ===== Логотип ===== -->
+    <div class="logo-container">
+        <img src="logo.png" alt="Логотип">
     </div>
 
-    <!-- Подключаем скрипт Telegram -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    
-    <!-- Подключаем основной скрипт с новой версией -->
-    <script src="script.js?v=ACCORDION_CART234"></script> 
-    
+    <h1>Наше Меню</h1>
+
+    <!-- ===== Аккордеон меню ===== -->
+    <div id="menu-accordion"></div>
+
+    <!-- ===== Корзина ===== -->
+    <div id="cart-accordion" class="accordion-item cart-item">
+        <div id="cart-header" class="accordion-header">🛒 Ваша корзина</div>
+        <div id="cart-content" class="accordion-content">
+            <ul id="cart-items-list">
+                <li id="empty-cart-message">Корзина пуста</li>
+            </ul>
+            <hr>
+            <p class="total-line">Итого: <strong id="total-price">0</strong> ₽</p>
+        </div>
+    </div>
+
+</div>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="script.js?v=ACCORDION_FINAL"></script>
 </body>
 </html>

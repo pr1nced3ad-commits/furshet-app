@@ -12,8 +12,6 @@ body {
     margin: 0;
     padding: 15px;
     color: var(--tg-text-color);
-
-    /* --- Фоновое изображение --- */
     background-image: url('background.jpg');
     background-size: cover;
     background-position: center;
@@ -21,37 +19,23 @@ body {
 }
 .container { max-width: 100%; }
 
-/* --- Логотип --- */
-.logo-container {
+.logo-container { text-align: center; margin-bottom: 20px; }
+.logo-container img { max-width: 150px; height: auto; }
+
+h1, h2, h3 {
+    color: #1c1c1c;
     text-align: center;
-    margin-bottom: 20px;
-}
-.logo-container img {
-    max-width: 150px;
-    height: auto;
+    text-shadow: 0 0 5px rgba(255,255,255,0.8);
 }
 
-h1, h2, h3 { 
-    color: #1c1c1c; /* Явный темный цвет */
-    text-align: center; 
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8); /* Светлая тень */
-}
-
-/* Стили для аккордеона */
+/* ==== Аккордеон ==== */
 .accordion-item {
     margin-bottom: 10px;
     border-radius: 10px;
     overflow: hidden;
-    background-color: rgba(243, 243, 243, 0.9); 
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Добавили легкую тень */
+    background-color: rgba(243,243,243,0.9);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
-/* Меняем цвет фона для темной темы Telegram */
-@media (prefers-color-scheme: dark) {
-    .accordion-item {
-        background-color: rgba(40, 40, 40, 0.9);
-    }
-}
-
 .accordion-header {
     padding: 15px;
     font-size: 18px;
@@ -61,89 +45,65 @@ h1, h2, h3 {
     justify-content: space-between;
     align-items: center;
     user-select: none;
-    
-    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
-    /* Делаем цвет заголовка категории четким и темным */
-    color: #1c1c1c; 
-    text-shadow: 0 0 5px rgba(255, 255, 255, 0.7); /* Легкая светлая тень для читаемости */
+    color: #1c1c1c;
+    text-shadow: 0 0 5px rgba(255,255,255,0.7);
 }
 .accordion-header::after {
     content: '▼';
     font-size: 12px;
     transition: transform 0.2s ease-in-out;
 }
-.accordion-header.active::after {
-    transform: rotate(180deg);
-}
+.accordion-header.active::after { transform: rotate(180deg); }
 .accordion-content {
     max-height: 0;
     overflow: hidden;
-    transition: max-height 0.3s ease-in-out, padding 0.3s ease-in-out;
+    transition: max-height 0.4s ease-in-out, padding 0.3s ease-in-out;
     padding: 0 15px;
 }
 
-/* Стили для товаров внутри аккордеона */
 .menu-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 0;
-    border-bottom: 1px solid rgba(112, 117, 121, 0.5); /* Полупрозрачный разделитель */
+    border-bottom: 1px solid rgba(112,117,121,0.3);
 }
-.menu-item:last-child {
-    border-bottom: none;
-}
+.menu-item:last-child { border-bottom: none; }
 
-.item-info p { 
-    margin: 0;
-    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
-    /* Делаем цвет названия блюда четким */
-    color: #212121;
-}
-.item-price { 
-    font-size: 14px; 
-    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
-    /* Делаем цену более темной и заметной */
-    color: #444444;
-    font-weight: 500;
-}
+.item-info p { margin: 0; color: #212121; }
+.item-price { font-size: 14px; color: #444; font-weight: 500; }
 .item-controls { display: flex; align-items: center; }
 .item-controls button {
-    width: 32px;
-    height: 32px;
-    border: none;
+    width: 32px; height: 32px; border: none;
     background-color: var(--tg-button-color);
     color: var(--tg-button-text-color);
     border-radius: 50%;
-    font-size: 20px;
-    font-weight: bold;
-    cursor: pointer;
+    font-size: 20px; font-weight: bold; cursor: pointer;
     line-height: 32px;
 }
-.item-controls span {
-    margin: 0 12px;
-    font-size: 18px;
-    min-width: 24px;
-    text-align: center;
-    /* ===================== ИЗМЕНЕНИЕ ЗДЕСЬ ===================== */
-    /* Делаем цифру количества тоже более четкой */
-    color: #1c1c1c;
+.item-controls span { margin: 0 12px; font-size: 18px; min-width: 24px; text-align: center; color: #1c1c1c; }
+
+/* ==== Корзина ==== */
+.cart-item { border: 2px solid #2481cc; margin-top: 20px; }
+#cart-header { font-weight: bold; }
+#cart-content {
+    transition: max-height 0.4s ease-in-out, padding 0.3s ease-in-out;
+    overflow: hidden;
 }
 
-/* ======================= НОВЫЕ СТИЛИ ДЛЯ КОРЗИНЫ ======================= */
-.cart-item {
-    margin-top: 30px;
-    border: 2px solid #2481cc; /* Рамка в цвет кнопок Telegram */
-}
-
-#cart-header {
-    font-weight: bold;
-}
-
+/* Корзина внутри */
 #cart-items-list {
-    list-style-type: none; /* Убираем маркеры списка */
+    list-style: none;
     padding: 0;
     margin: 10px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
+}
+#cart-items-list::-webkit-scrollbar { width: 6px; }
+#cart-items-list::-webkit-scrollbar-thumb {
+    background-color: rgba(0,0,0,0.25);
+    border-radius: 3px;
 }
 #cart-items-list li {
     display: flex;
@@ -153,10 +113,16 @@ h1, h2, h3 {
     color: #333;
 }
 #empty-cart-message {
-    color: #707579; /* Цвет подсказки Telegram */
+    color: #707579;
     text-align: center;
 }
+
+/* Закреплённая итоговая строка */
 .total-line {
+    position: sticky;
+    bottom: 0;
+    background-color: rgba(243,243,243,0.95);
+    padding: 8px 0;
     font-weight: bold;
     font-size: 16px;
     display: flex;
@@ -164,13 +130,15 @@ h1, h2, h3 {
     color: #1c1c1c;
 }
 
-/* Стили для темной темы, если пользователь использует ее в Telegram */
+/* ==== Тёмная тема ==== */
 @media (prefers-color-scheme: dark) {
-    .accordion-item { background-color: rgba(40, 40, 40, 0.9); }
-    h1, h2, h3, .accordion-header, .item-info p, .item-controls span, .total-line { 
-        color: #f5f5f5; 
-        text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    body { background-color: #1e1e1e; }
+    .accordion-item { background-color: rgba(40,40,40,0.9); }
+    h1, h2, h3, .accordion-header, .item-info p, .item-controls span, .total-line {
+        color: #f5f5f5;
+        text-shadow: 0 0 5px rgba(0,0,0,0.7);
     }
     #cart-items-list li { color: #f5f5f5; }
-    .item-price { color: #bbbbbb; }
+    .item-price { color: #bbb; }
+    .total-line { background-color: rgba(35,35,35,0.9); }
 }
