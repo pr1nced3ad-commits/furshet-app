@@ -1,6 +1,7 @@
-// script.js — финальный стабильный вариант
+// === script.js ===
 document.addEventListener("DOMContentLoaded", () => {
   const webApp = window.Telegram?.WebApp;
+  const BACKEND_URL = "https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug";
   const GOOGLE_SHEET_CSV_URL =
     "https://docs.google.com/spreadsheets/d/e/2PACX-1vRjs3r3_rV1jSs0d2KNQ9PIjip7nGdnSgKcj2kt6FqlZMCmWEd6M__nbdiPEQ5vJpDempKO-ykzQdbu/pub?gid=0&single=true&output=csv";
   const CURRENCY = "₽";
@@ -8,6 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   let menu = {};
   const cart = {};
 
+  // === Загрузка меню ===
   async function loadAndRenderMenu() {
     const acc = document.getElementById("menu-accordion");
     acc.innerHTML = "<p style='text-align:center'>Загрузка меню...</p>";
@@ -34,9 +36,11 @@ document.addEventListener("DOMContentLoaded", () => {
       updateAllDisplays();
     } catch (e) {
       console.error("Ошибка загрузки меню:", e);
+      acc.innerHTML = "<p style='color:red;text-align:center'>Не удалось загрузить меню.</p>";
     }
   }
 
+  // === Создание аккордеона меню ===
   function renderAccordion() {
     const acc = document.getElementById("menu-accordion");
     acc.innerHTML = "";
@@ -81,6 +85,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
 
+    // Слушаем кнопки +/-
     acc.addEventListener("click", (e) => {
       const plus = e.target.closest(".btn-plus");
       const minus = e.target.closest(".btn-minus");
@@ -89,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // === Работа с корзиной ===
   function addToCart(id) {
     cart[id] = (cart[id] || 0) + 1;
     updateAllDisplays();
@@ -161,6 +167,51 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // === Модальное окно ввода телефона ===
+  function showPhonePrompt(totalPrice, orderData) {
+    const phone = prompt(
+      `Введите номер телефона, чтобы подтвердить заказ на ${totalPrice} ₽:`,
+      webApp.initDataUnsafe?.user?.phone_number || ""
+    );
+    if (!phone) {
+      webApp.showAlert("Вы не указали номер телефона 😕");
+      return;
+    }
+
+    orderData.phoneNumber = phone;
+
+    fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    })
+      .then((r) => r.json())
+      .then(() => {
+        webApp.showAlert("✅ Заказ принят! Менеджер свяжется с вами в ближайшее время.");
+        cartHeader.innerText = "🛒 Ваша корзина";
+        document.getElementById("cart-items-list").innerHTML =
+          '<li id="empty-cart-message">Корзина пуста</li>';
+        document.getElementById("total-price").innerText = "0";
+        for (const key in cart) delete cart[key];
+        webApp.MainButton.hide();
+      })
+      .catch(() => {
+        webApp.showAlert("Ошибка при отправке заказа 😔");
+      });
+  }
+
+  // === Кнопка "Оформить заказ" ===
+  webApp.onEvent("mainButtonClicked", function () {
+    const totals = computeTotals();
+    const order = { cart: {}, totalPrice: totals.totalPrice, userInfo: webApp.initDataUnsafe?.user || {} };
+    Object.keys(cart).forEach((id) => {
+      const found = Object.values(menu).flat().find((it) => it.id === id);
+      if (found) order.cart[found.name] = { quantity: cart[id], price: found.price };
+    });
+    showPhonePrompt(totals.totalPrice, order);
+  });
+
+  // === Разворачивание корзины ===
   const cartHeader = document.getElementById("cart-header");
   const cartContent = document.getElementById("cart-content");
   if (cartHeader && cartContent) {
@@ -176,16 +227,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  webApp?.onEvent("mainButtonClicked", () => {
-    const totals = computeTotals();
-    const order = { cart: {}, totalPrice: totals.totalPrice, userInfo: webApp.initDataUnsafe?.user || {} };
-    Object.keys(cart).forEach((id) => {
-      const found = Object.values(menu).flat().find((it) => it.id === id);
-      if (found) order.cart[found.name] = { quantity: cart[id], price: found.price };
-    });
-    webApp.sendData(JSON.stringify(order));
-  });
-
+  // === Запуск ===
   webApp?.expand();
   loadAndRenderMenu();
 });
