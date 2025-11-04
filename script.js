@@ -4,7 +4,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const webApp = window.Telegram.WebApp;
 
     // --- НАСТРОЙКИ ---
+    // ⚠️ Убедитесь, что здесь ваша правильная ссылка на функцию "Кухни"
     const BACKEND_URL = 'https://functions.yandexcloud.net/d4ejsg34lsdstd4de2ug';
+    // ⚠️ Убедитесь, что здесь ваша правильная CSV-ссылка из Google Sheets
     const GOOGLE_SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRjs3r3_rV1jSs0d2KNQ9PIjip7nGdnSgKcj2kt6FqlZMCmWEd6M__nbdiPEQ5vJpDempKO-ykzQdbu/pub?gid=0&single=true&output=csv';
     const CURRENCY = '₽';
     
@@ -84,39 +86,42 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ======================= ГЛАВНОЕ ИСПРАВЛЕНИЕ ЗДЕСЬ =======================
+    // --- ИСПРАВЛЕННЫЕ ФУНКЦИИ ---
     window.addToCart = function(id) {
         cart[id] = (cart[id] || 0) + 1;
-        // Обновляем и счетчик, и всю корзину
-        updateItemQuantity(id);
-        updateCartSummary();
+        updateAllDisplays();
     }
     window.removeFromCart = function(id) {
         if (cart[id]) {
             cart[id]--;
             if (cart[id] <= 0) delete cart[id];
-            // Обновляем и счетчик, и всю корзину
-            updateItemQuantity(id);
-            updateCartSummary();
+            updateAllDisplays();
         }
     }
 
-    // Эта функция теперь только обновляет число рядом с кнопками +/-
-    function updateItemQuantity(id) {
-        const quantitySpan = document.getElementById(`quantity-${id}`);
-        if (quantitySpan) quantitySpan.textContent = cart[id] || 0;
-    }
+    // ЕДИНАЯ ФУНКЦИЯ ПОЛНОГО ОБНОВЛЕНИЯ ЭКРАНА
+    function updateAllDisplays() {
+        let totalPrice = 0;
+        let totalItems = 0;
 
-    // Эта функция теперь отвечает за ПОЛНУЮ перерисовку корзины
-    function updateCartSummary() {
+        // Обновляем счетчики в меню
+        for (const category in menu) {
+            menu[category].forEach(item => {
+                const quantitySpan = document.getElementById(`quantity-${item.id}`);
+                const quantity = cart[item.id] || 0;
+                if (quantitySpan) {
+                    quantitySpan.innerText = quantity;
+                }
+            });
+        }
+        
+        // Обновляем корзину
         const cartHeader = document.getElementById('cart-header');
         const cartItemsList = document.getElementById('cart-items-list');
         const emptyCartMessage = document.getElementById('empty-cart-message');
         if (!cartHeader || !cartItemsList || !emptyCartMessage) return;
         
         cartItemsList.innerHTML = '';
-        let totalPrice = 0;
-        let totalItems = 0;
         
         for (const id in cart) {
             totalItems += cart[id];
@@ -132,6 +137,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }
         }
+        
         if (totalItems > 0) {
             cartHeader.innerText = `🛒 Ваш заказ (${totalItems} шт.)`;
             emptyCartMessage.style.display = 'none';
@@ -140,7 +146,9 @@ document.addEventListener('DOMContentLoaded', function() {
             cartItemsList.appendChild(emptyCartMessage);
             emptyCartMessage.style.display = 'block';
         }
+        
         document.getElementById('total-price').innerText = totalPrice;
+        
         if (totalItems > 0) {
             webApp.MainButton.setText(`Оформить заказ (${totalPrice} ${CURRENCY})`);
             if (!webApp.MainButton.isVisible) webApp.MainButton.show();
@@ -149,17 +157,67 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    // ... (остальной код остается без изменений) ...
-
+    // Добавляем обработчик клика для заголовка корзины
     const cartHeader = document.getElementById('cart-header');
     const cartContent = document.getElementById('cart-content');
     if (cartHeader && cartContent) {
-        cartHeader.addEventListener('click', () => { /* ... код для раскрытия ... */ });
+        cartHeader.addEventListener('click', () => {
+            cartHeader.classList.toggle('active');
+            if (cartContent.style.maxHeight) {
+                cartContent.style.maxHeight = null;
+                cartContent.style.padding = "0 15px";
+            } else {
+                cartContent.style.maxHeight = cartContent.scrollHeight + "px";
+                cartContent.style.padding = "10px 15px";
+            }
+        });
     }
 
-    webApp.onEvent('mainButtonClicked', function() { /* ... код отправки заказа ... */ });
+    // Обработчик кнопки "Оформить заказ"
+    webApp.onEvent('mainButtonClicked', function() {
+        const phoneNumber = prompt("Пожалуйста, введите ваш номер телефона для связи:", "");
+        if (phoneNumber === null || phoneNumber.trim() === "") {
+            webApp.showAlert('Для оформления заказа нам нужен ваш номер телефона.');
+            return;
+        }
+        
+        const orderData = { cart: {}, totalPrice: 0, userInfo: webApp.initDataUnsafe.user, phoneNumber: phoneNumber };
+        let totalPrice = 0;
+        for (const id in cart) {
+            for (const category in menu) {
+                const menuItem = menu[category].find(item => item.id == id);
+                if (menuItem) { 
+                    orderData.cart[menuItem.name] = { quantity: cart[id], price: menuItem.price }; 
+                    totalPrice += menuItem.price * cart[id]; 
+                    break; 
+                }
+            }
+        }
+        orderData.totalPrice = totalPrice;
+        webApp.MainButton.showProgress();
+        fetch(BACKEND_URL, { 
+            method: 'POST', 
+            headers: {'Content-Type': 'application/json'}, 
+            body: JSON.stringify(orderData) 
+        })
+        .then(response => response.json())
+        .then(data => {
+            webApp.MainButton.hideProgress();
+            if (data.status === 'ok') { 
+                webApp.showAlert('Ваш заказ принят! Скоро с вами свяжется менеджер.'); 
+                webApp.close(); 
+            } else { 
+                webApp.showAlert('Произошла ошибка. Попробуйте снова.'); 
+            }
+        }).catch(error => {
+            webApp.MainButton.hideProgress();
+            webApp.showAlert('Ошибка сети. Пожалуйста, проверьте ваше интернет-соединение.');
+        });
+    });
 
+    // --- ИНИЦИАЛИЗАЦИЯ ---
     webApp.expand();
     loadAndRenderMenu();
-    updateCartSummary(); 
+    updateAllDisplays(); // Запускаем полное обновление при старте
+
 });
