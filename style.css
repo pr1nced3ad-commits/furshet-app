@@ -130,27 +130,47 @@ h1, h2, h3 {
     color: #1c1c1c;
 }
 
-/* Корзина */
-#cart-summary {
+/* ======================= НОВЫЕ СТИЛИ ДЛЯ КОРЗИНЫ ======================= */
+.cart-item {
     margin-top: 30px;
-    padding: 15px;
-    border-radius: 10px;
-    background-color: rgba(243, 243, 243, 0.9);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-#cart-summary h3, #cart-summary p {
-    color: #1c1c1c; /* Четкий текст в корзине */
+    border: 2px solid #2481cc; /* Рамка в цвет кнопок Telegram */
 }
 
+#cart-header {
+    font-weight: bold;
+}
+
+#cart-items-list {
+    list-style-type: none; /* Убираем маркеры списка */
+    padding: 0;
+    margin: 10px 0;
+}
+#cart-items-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    font-size: 14px;
+    color: #333;
+}
+#empty-cart-message {
+    color: #707579; /* Цвет подсказки Telegram */
+    text-align: center;
+}
+.total-line {
+    font-weight: bold;
+    font-size: 16px;
+    display: flex;
+    justify-content: space-between;
+    color: #1c1c1c;
+}
+
+/* Стили для темной темы, если пользователь использует ее в Telegram */
 @media (prefers-color-scheme: dark) {
-    #cart-summary, .accordion-item {
-        background-color: rgba(40, 40, 40, 0.9);
+    .accordion-item { background-color: rgba(40, 40, 40, 0.9); }
+    h1, h2, h3, .accordion-header, .item-info p, .item-controls span, .total-line { 
+        color: #f5f5f5; 
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
     }
-    .accordion-header, .item-info p, .item-controls span, #cart-summary h3, #cart-summary p {
-        color: #f5f5f5; /* Делаем весь текст светлым для темной темы */
-        text-shadow: 0 0 5px rgba(0, 0, 0, 0.7); /* Темная тень для читаемости */
-    }
-    .item-price {
-        color: #bbbbbb; /* Светло-серый для цены в темной теме */
-    }
+    #cart-items-list li { color: #f5f5f5; }
+    .item-price { color: #bbbbbb; }
 }
