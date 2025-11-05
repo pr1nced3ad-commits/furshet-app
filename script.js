@@ -170,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================== ГЛАВНОЕ ИЗМЕНЕНИЕ ==========================
-  // Заменяем блок "mainButtonClicked", как вы просили
+  // Заменяем блок "mainButtonClicked" на новый, с запросом имени и телефона
   // =====================================================================
   webApp.onEvent("mainButtonClicked", function () {
     const totals = computeTotals();
@@ -179,58 +179,61 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    // --- ШАГ 1: Запрашиваем КОНТАКТ через Telegram ---
-    webApp.requestContact((sent) => {
-        if (!sent) {
-            webApp.showAlert('Для оформления заказа нам нужен ваш номер телефона.');
-            return;
-        }
+    // --- ШАГ 1: Запрашиваем ИМЯ ---
+    const defaultName = webApp.initDataUnsafe?.user?.first_name || "";
+    const clientName = prompt("Пожалуйста, введите ваше имя:", defaultName);
 
-        // --- ШАГ 2: Если контакт получен, запрашиваем ИМЯ ---
-        const defaultName = webApp.initDataUnsafe?.user?.first_name || "";
-        const clientName = prompt("Спасибо! Теперь, пожалуйста, введите ваше имя:", defaultName);
+    if (!clientName) { // Если пользователь нажал "Отмена" или оставил поле пустым
+        webApp.showAlert('Вы не указали ваше имя.');
+        return;
+    }
 
-        if (!clientName) {
-            webApp.showAlert('Вы не указали ваше имя.');
-            return;
-        }
+    // --- ШАГ 2: Запрашиваем ТЕЛЕФОН ---
+    const phoneNumber = prompt(`Спасибо, ${clientName}! Теперь введите номер телефона, чтобы подтвердить заказ на ${totals.totalPrice} ₽:`, "");
 
-        // --- ШАГ 3: Собираем все данные и отправляем ---
-        const orderData = { 
-            cart: {}, 
-            totalPrice: totals.totalPrice, 
-            userInfo: webApp.initDataUnsafe.user, 
-            phoneNumber: webApp.initDataUnsafe.user?.phone_number || 'Не получен',
-            clientName: clientName
-        };
-        
-        Object.keys(cart).forEach((id) => {
-          const found = Object.values(menu).flat().find((it) => it.id === id);
-          if (found) orderData.cart[found.name] = { quantity: cart[id], price: found.price };
-        });
+    if (!phoneNumber) {
+        webApp.showAlert("Вы не указали номер телефона 😕");
+        return;
+    }
 
-        webApp.MainButton.showProgress();
+    // Собираем данные заказа
+    const orderData = { 
+        cart: {}, 
+        totalPrice: totals.totalPrice, 
+        userInfo: webApp.initDataUnsafe?.user || {},
+        phoneNumber: phoneNumber,
+        clientName: clientName // Добавляем введенное имя
+    };
 
-        fetch(BACKEND_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(orderData),
-        })
-          .then((r) => r.json())
-          .then((data) => {
-              webApp.MainButton.hideProgress();
-              if (data.status === 'ok') {
-                webApp.showAlert("✅ Заказ принят! Менеджер свяжется с вами в ближайшее время.");
-                webApp.close();
-              } else {
-                webApp.showAlert("Ошибка при отправке заказа 😔");
-              }
-          })
-          .catch(() => {
-            webApp.MainButton.hideProgress();
-            webApp.showAlert("Ошибка сети. Пожалуйста, проверьте подключение к интернету.");
-          });
+    Object.keys(cart).forEach((id) => {
+      const found = Object.values(menu).flat().find((it) => it.id === id);
+      if (found) orderData.cart[found.name] = { quantity: cart[id], price: found.price };
     });
+
+    webApp.MainButton.showProgress();
+
+    fetch(BACKEND_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(orderData),
+    })
+      .then((r) => r.json())
+      .then((data) => {
+          webApp.MainButton.hideProgress();
+          if (data.status === 'ok') {
+            webApp.showAlert("✅ Заказ принят! Менеджер свяжется с вами в ближайшее время.");
+            // Очищаем корзину после успешного заказа
+            for (const key in cart) delete cart[key];
+            updateAllDisplays();
+            webApp.close();
+          } else {
+            webApp.showAlert("Ошибка при отправке заказа 😔");
+          }
+      })
+      .catch(() => {
+        webApp.MainButton.hideProgress();
+        webApp.showAlert("Ошибка сети. Пожалуйста, проверьте подключение к интернету.");
+      });
   });
 
   // === Разворачивание корзины ===
