@@ -157,7 +157,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     totalEl.innerText = Math.round(totals.totalPrice);
     
-    // Этот код автоматически подгоняет высоту корзины, если она открыта
     if (cartHeader.classList.contains('active')) {
         cartContentEl.style.maxHeight = cartContentEl.scrollHeight + "px";
     }
@@ -171,7 +170,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ========================== ГЛАВНОЕ ИЗМЕНЕНИЕ ==========================
-  // Этот блок заменен на нашу надежную версию с prompt
+  // Заменяем блок "mainButtonClicked" на новый, с запросом имени и телефона
   // =====================================================================
   webApp.onEvent("mainButtonClicked", function () {
     const totals = computeTotals();
@@ -180,20 +179,30 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    const phoneNumber = prompt(
-      `Введите номер телефона, чтобы подтвердить заказ на ${totals.totalPrice} ₽:`, ""
-    );
+    // --- ШАГ 1: Запрашиваем ИМЯ ---
+    const defaultName = webApp.initDataUnsafe?.user?.first_name || "";
+    const clientName = prompt("Пожалуйста, введите ваше имя:", defaultName);
 
-    if (!phoneNumber) {
-      webApp.showAlert("Вы не указали номер телефона 😕");
-      return;
+    if (!clientName) { // Если пользователь нажал "Отмена" или оставил поле пустым
+        webApp.showAlert('Вы не указали ваше имя.');
+        return;
     }
 
+    // --- ШАГ 2: Запрашиваем ТЕЛЕФОН ---
+    const phoneNumber = prompt(`Спасибо, ${clientName}! Теперь введите номер телефона, чтобы подтвердить заказ на ${totals.totalPrice} ₽:`, "");
+
+    if (!phoneNumber) {
+        webApp.showAlert("Вы не указали номер телефона 😕");
+        return;
+    }
+
+    // Собираем данные заказа
     const orderData = { 
         cart: {}, 
         totalPrice: totals.totalPrice, 
         userInfo: webApp.initDataUnsafe?.user || {},
-        phoneNumber: phoneNumber
+        phoneNumber: phoneNumber,
+        clientName: clientName // Добавляем введенное имя
     };
 
     Object.keys(cart).forEach((id) => {
@@ -213,6 +222,9 @@ document.addEventListener("DOMContentLoaded", () => {
           webApp.MainButton.hideProgress();
           if (data.status === 'ok') {
             webApp.showAlert("✅ Заказ принят! Менеджер свяжется с вами в ближайшее время.");
+            // Очищаем корзину после успешного заказа
+            for (const key in cart) delete cart[key];
+            updateAllDisplays();
             webApp.close();
           } else {
             webApp.showAlert("Ошибка при отправке заказа 😔");
